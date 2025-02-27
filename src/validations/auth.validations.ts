@@ -1,0 +1,22 @@
+import { z } from "zod";
+
+export const registerUserSchema = z.object({
+  name: z
+    .string({
+      required_error: "Name is required",
+    })
+    .min(3, "Name must be consists of 3 characters")
+    .max(50, "Name is should not be longer then 50 characters"),
+  email: z
+    .string({
+      required_error: "Email is required",
+    })
+    .email("Invalid email"),
+  password: z
+    .string({
+      required_error: "Password is required",
+    })
+    .min(8, "Password must be of atleast 8 characters"),
+});
+
+export type RegisterUser = z.infer<typeof registerUserSchema>;
