@@ -5,7 +5,7 @@ export interface IUser extends Document {
   email: string;
   password: string;
   organizations: string[];
-  role: "admin" | "member";
+  isVerified: boolean;
 }
 
 const userSchema: Schema<IUser> = new Schema(
@@ -24,12 +24,12 @@ const userSchema: Schema<IUser> = new Schema(
       type: String,
       required: true,
     },
-    organizations: {
-      type: [String],
-    },
-    role: {
-      type: String,
-      default: "member",
+    organizations: [
+      { type: mongoose.Schema.Types.ObjectId, ref: "Organization" },
+    ],
+    isVerified: {
+      type: Boolean,
+      default: false,
     },
   },
   { timestamps: true }
