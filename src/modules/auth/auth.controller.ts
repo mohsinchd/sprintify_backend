@@ -55,8 +55,6 @@ export const loginUser = asyncHandler(
       password
     );
 
-    //
-
     if (!isPasswordCorrect)
       return next({ message: "Invalid credentials", statusCode: 400 });
 
