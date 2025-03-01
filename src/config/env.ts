@@ -12,7 +12,13 @@ const envSchema = z.object({
     .transform((val) => parseInt(val, 10))
     .default("3000"),
   DATABASE_URL: z.string(),
-  JWT_SECRET: z.string(),
+  JWT_AUTH_SECRET: z.string(),
+  JWT_AUTH_SECRET_EXPIRES_IN: z.string(),
+  RESEND_KEY: z.string(),
+  JWT_EMAIL_SECRET: z.string(),
+  JWT_EMAIL_SECRET_EXPIRES_IN: z.string(),
+  FRONTEND_URL: z.string(),
+  BACKEND_URL: z.string(),
 });
 
 const env = envSchema.parse(process.env);
