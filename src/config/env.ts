@@ -19,6 +19,8 @@ const envSchema = z.object({
   JWT_EMAIL_SECRET_EXPIRES_IN: z.string(),
   FRONTEND_URL: z.string(),
   BACKEND_URL: z.string(),
+  GOOGLE_CLIENT_ID: z.string(),
+  GOOGLE_CLIENT_SECRET: z.string(),
 });
 
 const env = envSchema.parse(process.env);

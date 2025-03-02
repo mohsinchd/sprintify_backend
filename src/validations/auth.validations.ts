@@ -32,5 +32,10 @@ export const loginUserSchema = z.object({
     .min(8, "Password must be of atleast 8 characters"),
 });
 
+export const googleLoginSchema = z.object({
+  token: z.string({ required_error: "Google Token is required" }),
+});
+
 export type RegisterUser = z.infer<typeof registerUserSchema>;
 export type LoginUser = z.infer<typeof loginUserSchema>;
+export type GoogleLogin = z.infer<typeof googleLoginSchema>;

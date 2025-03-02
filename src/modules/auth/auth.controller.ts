@@ -1,14 +1,16 @@
 import { asyncHandler } from "../../middlewares/async.middleware";
-import { RegisterUser } from "../../validations/auth.validations";
+import { GoogleLogin, RegisterUser } from "../../validations/auth.validations";
 import { IUser, User } from "./auth.model";
 import { Request, Response, NextFunction } from "express";
 import {
   checkIsPasswordCorrect,
   generateJWT,
+  getGoogleUser,
   hashPassword,
   sendVerificationEmail,
   verifyJWT,
 } from "./auth.service";
+import env from "../../config/env";
 
 export const registerUser = asyncHandler(
   async (req: Request, res: Response, next: NextFunction) => {
@@ -16,8 +18,15 @@ export const registerUser = asyncHandler(
 
     const userExists = await User.findOne<IUser>({ email });
 
-    if (userExists)
+    if (userExists) {
+      if (userExists.authMethod === "google")
+        return next({
+          message:
+            "This email is registered with Google. Please login with Google",
+          statusCode: 400,
+        });
       return next({ message: "User already exists", statusCode: 400 });
+    }
 
     const hashedPassword = await hashPassword(password);
 
@@ -50,8 +59,15 @@ export const loginUser = asyncHandler(
 
     if (!user) return next({ message: "Invalid credentials", statusCode: 400 });
 
+    if (user.authMethod === "google")
+      return next({
+        message:
+          "This user is registered with Google. Please login with Google",
+        statusCode: 400,
+      });
+
     const isPasswordCorrect = await checkIsPasswordCorrect(
-      user.password,
+      user.password as string,
       password
     );
 
@@ -61,7 +77,7 @@ export const loginUser = asyncHandler(
     if (!user.isVerified)
       return next({ message: "Please verify your email", statusCode: 401 });
 
-    const token = generateJWT({ id: user._id as string });
+    const token = generateJWT({ id: user._id as string }, env.JWT_AUTH_SECRET);
 
     res
       .status(200)
@@ -89,5 +105,46 @@ export const verifyEmail = asyncHandler(
     await user.save();
 
     res.status(200).json({ success: true, message: "Email verified" });
+  }
+);
+
+export const googleLogin = asyncHandler(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const { token }: GoogleLogin = req.body;
+
+    const googleUser = await getGoogleUser(token, next);
+
+    let user = await User.findOne<IUser>({ email: googleUser.email });
+
+    if (!user) {
+      user = await User.create({
+        name: googleUser.name,
+        email: googleUser.email,
+        isVerified: true,
+        avatar: googleUser.picture,
+        authMethod: "google",
+      });
+    } else if (user.authMethod === "local") {
+      user.authMethod = "google";
+      user.isVerified = true;
+      if (googleUser.picture && !user.avatar) {
+        user.avatar = googleUser.picture;
+      }
+      await user.save();
+    }
+
+    const authToken = generateJWT(
+      { id: user?._id as string },
+      env.JWT_AUTH_SECRET
+    );
+
+    res
+      .status(200)
+      .cookie("token", authToken, {
+        httpOnly: true,
+        maxAge: 7 * 24 * 60 * 60 * 1000,
+        secure: true,
+      })
+      .json({ success: true, message: "Logged in successfully" });
   }
 );
