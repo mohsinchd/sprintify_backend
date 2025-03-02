@@ -3,9 +3,11 @@ import mongoose, { Schema, Model, Document } from "mongoose";
 export interface IUser extends Document {
   name: string;
   email: string;
-  password: string;
+  password?: string;
   organizations: string[];
   isVerified: boolean;
+  avatar?: string;
+  authMethod: "local" | "google";
 }
 
 const userSchema: Schema<IUser> = new Schema(
@@ -22,7 +24,9 @@ const userSchema: Schema<IUser> = new Schema(
     },
     password: {
       type: String,
-      required: true,
+      required: function () {
+        return this.authMethod === "local";
+      },
     },
     organizations: [
       { type: mongoose.Schema.Types.ObjectId, ref: "Organization" },
@@ -30,6 +34,11 @@ const userSchema: Schema<IUser> = new Schema(
     isVerified: {
       type: Boolean,
       default: false,
+    },
+    avatar: String,
+    authMethod: {
+      type: String,
+      default: "local",
     },
   },
   { timestamps: true }
